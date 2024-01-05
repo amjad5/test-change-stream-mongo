@@ -2,7 +2,7 @@ const { MongoClient } = require('mongodb');
 
 async function initializeChangeStream() {
   // const client = new MongoClient('mongodb://localhost:30001?directConnection=true',
-  const client = new MongoClient('mongodb://localhost:27017?directConnection=true',
+  const client = new MongoClient('mongodb://127.0.0.1:27017/?directConnection=true&serverSelectionTimeoutMS=2000',
   );
 
   await client.connect();

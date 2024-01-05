@@ -18,6 +18,8 @@ services:
     volumes:
       - "mongo1_data:/data/db"
       - "mongo1_config:/data/configdb"
+    networks:
+      - mongoNet
 
   mongo2:
     image: mongo
@@ -29,6 +31,8 @@ services:
     volumes:
       - "mongo2_data:/data/db"
       - "mongo2_config:/data/configdb"
+    networks:
+      - mongoNet
 
   mongo3:
     image: mongo
@@ -40,6 +44,8 @@ services:
     volumes:
       - "mongo3_data:/data/db"
       - "mongo3_config:/data/configdb"
+    networks:
+      - mongoNet
 
 volumes:
   mongo1_data:
