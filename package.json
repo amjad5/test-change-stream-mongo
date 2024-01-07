@@ -4,11 +4,14 @@
   "description": "",
   "main": "mongoChangeStream.js",
   "scripts": {
+    "start": "node mongoChangeStream.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "date-fns": "^3.1.0",
+    "dotenv": "^16.3.1",
     "mongodb": "^6.3.0"
   },
   "devDependencies": {

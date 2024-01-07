@@ -8,13 +8,16 @@ services:
       - 27017:27017
     extra_hosts:
       - "host.docker.internal:host-gateway"
-    # healthcheck:
-    #   test: echo "try { rs.status() } catch (err) { rs.initiate({_id:'rs0',members:[{_id:0,host:'host.docker.internal:27017',priority:1},{_id:1,host:'host.docker.internal:27018',priority:0.5},{_id:2,host:'host.docker.internal:27019',priority:0.5}]}) }" | mongosh --port 27017 --quiet
-    #   interval: 5s
-    #   timeout: 30s
-    #   start_period: 0s
-    #   start_interval: 1s
-    #   retries: 30
+    healthcheck:
+      test: echo "try { rs.status() } catch (err) { rs.initiate({_id:'rs0',members:[{_id:0,host:'host.docker.internal:27017',priority:1},{_id:1,host:'host.docker.internal:27018',priority:0.5},{_id:2,host:'host.docker.internal:27019',priority:0.5}]}) }" | mongosh --port 27017 --quiet
+      interval: 5s
+      timeout: 30s
+      start_period: 0s
+      # start_interval: 1s
+      retries: 30
+    # environment:
+    #   MONGO_INITDB_ROOT_USERNAME: root
+    #   MONGO_INITDB_ROOT_PASSWORD: example
     volumes:
       - "mongo1_data:/data/db"
       - "mongo1_config:/data/configdb"
@@ -24,6 +27,9 @@ services:
   mongo2:
     image: mongo
     command: ["--replSet", "rs0", "--bind_ip_all", "--port", "27018"]
+    # environment:
+    #   MONGO_INITDB_ROOT_USERNAME: root
+    #   MONGO_INITDB_ROOT_PASSWORD: example
     ports:
       - 27018:27018
     extra_hosts:
@@ -37,6 +43,9 @@ services:
   mongo3:
     image: mongo
     command: ["--replSet", "rs0", "--bind_ip_all", "--port", "27019"]
+    # environment:
+    #   MONGO_INITDB_ROOT_USERNAME: root
+    #   MONGO_INITDB_ROOT_PASSWORD: example
     ports:
       - 27019:27019
     extra_hosts:
@@ -47,6 +56,25 @@ services:
     networks:
       - mongoNet
 
+  mongo-express:
+    image: mongo-express
+    container_name: mongo-express
+    environment:
+      # - ME_CONFIG_MONGODB_ADMINUSERNAME=root
+      # - ME_CONFIG_MONGODB_ADMINPASSWORD=example
+      - ME_CONFIG_MONGODB_URL=mongodb://host.docker.internal:27017/o2geeks?authSource=admin&replicaSet=rs0
+      # - ME_CONFIG_BASICAUTH_USERNAME=root
+      # - ME_CONFIG_BASICAUTH_PASSWORD=example
+    # depends_on:
+    #   - mongo2
+    restart: always
+    ports:
+      - "8081:8081"
+    networks:
+      - mongoNet
+
+networks:
+  mongoNet:
 volumes:
   mongo1_data:
   mongo2_data:
