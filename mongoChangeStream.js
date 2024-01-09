@@ -77,15 +77,6 @@ async function insertScoreBoardPost(changeEvent) {
     console.log('checking group')
     await updateScoreOnCreate(changeEvent.fullDocument, 2, collectionTypes.GROUP);
   }
-
-  // switch (changeEvent.operationType) {
-    // case changeEvent.operationType == changeTypes.INSERT:
-    // break
-    // case changeEvent.operationType == changeTypes.UPDATE:
-    //   break;
-    // case changeEvent.operationType == changeTypes.REPLACE:
-    //   break;
-  // }
 }
 
 async function updateScoreOnCreate(insertedDocument, scorePoints, collectionType) {
@@ -104,7 +95,7 @@ async function updateScoreOnCreate(insertedDocument, scorePoints, collectionType
     initialScoreBoard.user_id = userId;
     const insertedScore = await client.db(process.env.defaultDB).collection(process.env.scoreboardCollection).insertOne(initialScoreBoard)
     if (insertedScore != null) {
-      console.log('inserted successfully!', insertedScore)
+      console.log('inserted successfully!', insertedScore);
       return
     }
   }
@@ -119,44 +110,44 @@ async function updateScoreOnCreate(insertedDocument, scorePoints, collectionType
   }
 
 
-  const weekScoreIndex = scoreRecord.weekly.findIndex(e => isSameWeek(e.start_date, Date()));
-  const startOfWeekDate = startOfWeek(Date()).toISOString()
-  const endOfWeekDate = endOfWeek(Date()).toISOString()
-  const currentWeekNumber = getWeek(Date())
+  // const weekScoreIndex = scoreRecord.weekly.findIndex(e => isSameWeek(e.start_date, Date()));
+  // const startOfWeekDate = startOfWeek(Date()).toISOString()
+  // const endOfWeekDate = endOfWeek(Date()).toISOString()
+  // const currentWeekNumber = getWeek(Date())
 
-  if (weekScoreIndex == -1) {
-    scoreRecord.weekly.push(
-      { week_number: currentWeekNumber, score: scorePoints, streak: 0, start_date: startOfWeekDate, end_date: endOfWeekDate }
-    )
-  } else {
-    scoreRecord.weekly[weekScoreIndex].score += scorePoints
-  }
-
-
-  const startOfMonthDate = startOfMonth(Date()).toISOString()
-  const endOfMonthDate = endOfMonth(Date()).toISOString()
-
-  const monthScoreIndex = scoreRecord.monthly.findIndex(e => isSameMonth(e.start_date, Date()));
+  // if (weekScoreIndex == -1) {
+  //   scoreRecord.weekly.push(
+  //     { week_number: currentWeekNumber, score: scorePoints, streak: 0, start_date: startOfWeekDate, end_date: endOfWeekDate }
+  //   )
+  // } else {
+  //   scoreRecord.weekly[weekScoreIndex].score += scorePoints
+  // }
 
 
-  if (monthScoreIndex == -1) {
-    scoreRecord.monthly.push(
-      { month: new Date().getMonth() + 1, start_date: startOfMonthDate, end_date: endOfMonthDate, score: scorePoints, streak: 0 }
-    )
-  } else {
-    scoreRecord.monthly[monthScoreIndex].score += scorePoints
-  }
+  // const startOfMonthDate = startOfMonth(Date()).toISOString()
+  // const endOfMonthDate = endOfMonth(Date()).toISOString()
+
+  // const monthScoreIndex = scoreRecord.monthly.findIndex(e => isSameMonth(e.start_date, Date()));
+
+
+  // if (monthScoreIndex == -1) {
+  //   scoreRecord.monthly.push(
+  //     { month: new Date().getMonth() + 1, start_date: startOfMonthDate, end_date: endOfMonthDate, score: scorePoints, streak: 0 }
+  //   )
+  // } else {
+  //   scoreRecord.monthly[monthScoreIndex].score += scorePoints
+  // }
 
 
 
-  const yearScoreIndex = scoreRecord.yearly.findIndex(e => e.year == getYear(new Date()));
-  if (yearScoreIndex == -1) {
-    scoreRecord.yearly.push(
-      { date: new Date().toISOString(), score: scorePoints }
-    )
-  } else {
-    scoreRecord.yearly[yearScoreIndex].score += scorePoints
-  }
+  // const yearScoreIndex = scoreRecord.yearly.findIndex(e => e.year == getYear(new Date()));
+  // if (yearScoreIndex == -1) {
+  //   scoreRecord.yearly.push(
+  //     { date: new Date().toISOString(), score: scorePoints }
+  //   )
+  // } else {
+  //   scoreRecord.yearly[yearScoreIndex].score += scorePoints
+  // }
 
 
   // const updatedScore = 
@@ -167,28 +158,28 @@ async function updateScoreOnCreate(insertedDocument, scorePoints, collectionType
 }
 
 function getInitialScoreBoard(scorePoints) {
-  const startOfMonthDate = startOfMonth(Date()).toISOString()
-  const endOfMonthDate = endOfMonth(Date()).toISOString()
-  const startOfWeekDate = startOfWeek(Date()).toISOString()
-  const endOfWeekDate = endOfWeek(Date()).toISOString()
+  // const startOfMonthDate = startOfMonth(Date()).toISOString()
+  // const endOfMonthDate = endOfMonth(Date()).toISOString()
+  // const startOfWeekDate = startOfWeek(Date()).toISOString()
+  // const endOfWeekDate = endOfWeek(Date()).toISOString()
   const today = new Date().toISOString()
-  const currentYear = new Date().getFullYear()
-  const currentWeekNumber = getWeek(Date())
+  // const currentYear = new Date().getFullYear()
+  // const currentWeekNumber = getWeek(Date())
 
   let defaultScoreStructure = {
-    user_id: 234,
+    user_id: 0,
     daily: [
       { date: today, score: scorePoints }
     ],
-    weekly: [
-      { week_number: currentWeekNumber, score: scorePoints, streak: 0, start_date: startOfWeekDate, end_date: endOfWeekDate }
-    ],
-    monthly: [
-      { month: new Date().getMonth() + 1, start_date: startOfMonthDate, end_date: endOfMonthDate, score: scorePoints, streak: 0 }
-    ],
-    yearly: [
-      { year: currentYear, score: scorePoints, start_date: startOfMonthDate, end_date: endOfMonthDate }
-    ]
+    // weekly: [
+    //   { week_number: currentWeekNumber, score: scorePoints, streak: 0, start_date: startOfWeekDate, end_date: endOfWeekDate }
+    // ],
+    // monthly: [
+    //   { month: new Date().getMonth() + 1, start_date: startOfMonthDate, end_date: endOfMonthDate, score: scorePoints, streak: 0 }
+    // ],
+    // yearly: [
+    //   { year: currentYear, score: scorePoints, start_date: startOfMonthDate, end_date: endOfMonthDate }
+    // ]
   }
   return defaultScoreStructure;
 }
