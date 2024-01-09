@@ -127,7 +127,7 @@ function getInitialScoreBoard(scorePoints) {
   let defaultScoreStructure = {
     user_id: 0,
     school_id: 0,
-    country: "",
+    country: "usa",
     daily: [
       { date: today, score: scorePoints }
     ],
