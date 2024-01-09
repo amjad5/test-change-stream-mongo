@@ -100,13 +100,14 @@ async function updateScoreOnCreate(insertedDocument, scorePoints, collectionType
     }
   }
 
-  const todayScoreIndex = scoreRecord.daily.findIndex(e => format(e.date, 'MM/dd/yyyy') == format(new Date(), 'MM/dd/yyyy'));
+  const todayScoreIndex = scoreRecord.daily.findIndex(e => format(e.date, 'dd/MM/yyyy') == format(new Date(), 'dd/MM/yyyy'));
   if (todayScoreIndex == -1) {
+    console.log("formated date ", format(new Date(), 'MM/dd/yyyy'))
     scoreRecord.daily.push(
-      { date: new Date().toISOString(), score: scorePoints }
+      { date: format(new Date(), 'dd/MM/yyyy'), score: scorePoints }
     )
   } else {
-    scoreRecord.daily[todayScoreIndex].score += scorePoints
+    scoreRecord.daily[todayScoreIndex].score += scorePoints;
   }
 
 
@@ -162,7 +163,7 @@ function getInitialScoreBoard(scorePoints) {
   // const endOfMonthDate = endOfMonth(Date()).toISOString()
   // const startOfWeekDate = startOfWeek(Date()).toISOString()
   // const endOfWeekDate = endOfWeek(Date()).toISOString()
-  const today = new Date().toISOString()
+  const today = format(new Date(), 'dd/MM/yyyy')
   // const currentYear = new Date().getFullYear()
   // const currentWeekNumber = getWeek(Date())
 
