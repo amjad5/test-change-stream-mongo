@@ -11,9 +11,16 @@ let changeTypes = {
   REPLACE: 'replace'
 }
 
+let collectionTypes = {
+  POST: 'post',
+  EVENT: 'event',
+  GROUP: 'group'
+}
+
 const collections = [
   'post',
-  'event'
+  'event',
+  'group'
 ]
 
 
@@ -44,13 +51,13 @@ async function initializeChangeStream() {
 
     console.log("Collection Name: ", changeEvent.ns.coll);
 
-    switch (changeEvent.ns.coll) {
-      case 'event':
-        break
-      case 'post':
-        insertScoreBoardPost(changeEvent);
-        break
+    if (changeEvent.ns.coll == collectionTypes.POST ||
+      changeEvent.ns.coll == collectionTypes.EVENT ||
+      changeEvent.ns.coll == collectionTypes.GROUP) {
+      console.log("function to be callled");
+      insertScoreBoardPost(changeEvent);
     }
+
   });
 
   changeStream.on('error', (error) => {
@@ -59,26 +66,42 @@ async function initializeChangeStream() {
 }
 
 async function insertScoreBoardPost(changeEvent) {
-  if (changeEvent.operationType == changeTypes.INSERT) {
-    await updateScoreOnCreatePost(changeEvent.fullDocument);
+  if (changeEvent.operationType == changeTypes.INSERT && changeEvent.ns.coll == collectionTypes.POST) {
+    console.log('checking post')
+    await updateScoreOnCreate(changeEvent.fullDocument, 1, collectionTypes.POST)
   }
-  switch (changeEvent.operationType) {
-    case changeEvent.operationType == changeTypes.INSERT:
+  else if (changeEvent.operationType == changeTypes.INSERT && changeEvent.ns.coll == collectionTypes.EVENT) {
+    console.log('checking event')
+    await updateScoreOnCreate(changeEvent.fullDocument, 2, collectionTypes.EVENT);
+  } else if (changeEvent.operationType == changeTypes.INSERT && changeEvent.ns.coll == collectionTypes.GROUP){
+    console.log('checking group')
+    await updateScoreOnCreate(changeEvent.fullDocument, 2, collectionTypes.GROUP);
+  }
 
-      break
-    case changeEvent.operationType == changeTypes.UPDATE:
-      break;
-    case changeEvent.operationType == changeTypes.REPLACE:
-      break;
-  }
+  // switch (changeEvent.operationType) {
+    // case changeEvent.operationType == changeTypes.INSERT:
+    // break
+    // case changeEvent.operationType == changeTypes.UPDATE:
+    //   break;
+    // case changeEvent.operationType == changeTypes.REPLACE:
+    //   break;
+  // }
 }
 
-async function updateScoreOnCreatePost(insertedDocument) {
-  const scoreRecord = await client.db(process.env.defaultDB).collection(process.env.scoreboardCollection).findOne({ user_id: insertedDocument.user_id })
+async function updateScoreOnCreate(insertedDocument, scorePoints, collectionType) {
+  // if collection type then userId is user_id else if group then group_own_id else owner_id (for event) 
+  const userId =
+    (collectionType == collectionTypes.POST) ? (insertedDocument.user_id) :
+      ((collectionType == collectionTypes.GROUP) ? (insertedDocument.group_owner_id) :
+        (insertedDocument.owner_id))
+
+
+  console.log("collection: " + collectionType + " score: " + scorePoints + " user_id: " + userId)
+  const scoreRecord = await client.db(process.env.defaultDB).collection(process.env.scoreboardCollection).findOne({ user_id: userId })
 
   if (scoreRecord == null) {
-    let initialScoreBoard = getInitialScoreBoard();
-    initialScoreBoard.user_id = insertedDocument.user_id;
+    let initialScoreBoard = getInitialScoreBoard(scorePoints);
+    initialScoreBoard.user_id = userId;
     const insertedScore = await client.db(process.env.defaultDB).collection(process.env.scoreboardCollection).insertOne(initialScoreBoard)
     if (insertedScore != null) {
       console.log('inserted successfully!', insertedScore)
@@ -89,10 +112,10 @@ async function updateScoreOnCreatePost(insertedDocument) {
   const todayScoreIndex = scoreRecord.daily.findIndex(e => format(e.date, 'MM/dd/yyyy') == format(new Date(), 'MM/dd/yyyy'));
   if (todayScoreIndex == -1) {
     scoreRecord.daily.push(
-      { date: new Date().toISOString(), score: 1 }
+      { date: new Date().toISOString(), score: scorePoints }
     )
   } else {
-    scoreRecord.daily[todayScoreIndex].score += 1
+    scoreRecord.daily[todayScoreIndex].score += scorePoints
   }
 
 
@@ -103,10 +126,10 @@ async function updateScoreOnCreatePost(insertedDocument) {
 
   if (weekScoreIndex == -1) {
     scoreRecord.weekly.push(
-      { week_number: currentWeekNumber, score: 0, streak: 0, start_date: startOfWeekDate, end_date: endOfWeekDate }
+      { week_number: currentWeekNumber, score: scorePoints, streak: 0, start_date: startOfWeekDate, end_date: endOfWeekDate }
     )
   } else {
-    scoreRecord.weekly[weekScoreIndex].score += 1
+    scoreRecord.weekly[weekScoreIndex].score += scorePoints
   }
 
 
@@ -118,10 +141,10 @@ async function updateScoreOnCreatePost(insertedDocument) {
 
   if (monthScoreIndex == -1) {
     scoreRecord.monthly.push(
-      { month: new Date().getMonth() + 1, start_date: startOfMonthDate, end_date: endOfMonthDate, score: 0, streak: 0 }
+      { month: new Date().getMonth() + 1, start_date: startOfMonthDate, end_date: endOfMonthDate, score: scorePoints, streak: 0 }
     )
   } else {
-    scoreRecord.monthly[monthScoreIndex].score += 1
+    scoreRecord.monthly[monthScoreIndex].score += scorePoints
   }
 
 
@@ -129,20 +152,21 @@ async function updateScoreOnCreatePost(insertedDocument) {
   const yearScoreIndex = scoreRecord.yearly.findIndex(e => e.year == getYear(new Date()));
   if (yearScoreIndex == -1) {
     scoreRecord.yearly.push(
-      { date: new Date().toISOString(), score: 1 }
+      { date: new Date().toISOString(), score: scorePoints }
     )
   } else {
-    scoreRecord.yearly[yearScoreIndex].score += 1
+    scoreRecord.yearly[yearScoreIndex].score += scorePoints
   }
 
 
-  const updatedScore = await client.db(process.env.defaultDB).collection(process.env.scoreboardCollection).replaceOne(
+  // const updatedScore = 
+  await client.db(process.env.defaultDB).collection(process.env.scoreboardCollection).replaceOne(
     { user_id: scoreRecord.user_id },
     scoreRecord
   )
 }
 
-function getInitialScoreBoard() {
+function getInitialScoreBoard(scorePoints) {
   const startOfMonthDate = startOfMonth(Date()).toISOString()
   const endOfMonthDate = endOfMonth(Date()).toISOString()
   const startOfWeekDate = startOfWeek(Date()).toISOString()
@@ -154,16 +178,16 @@ function getInitialScoreBoard() {
   let defaultScoreStructure = {
     user_id: 234,
     daily: [
-      { date: today, score: 0 }
+      { date: today, score: scorePoints }
     ],
     weekly: [
-      { week_number: currentWeekNumber, score: 0, streak: 0, start_date: startOfWeekDate, end_date: endOfWeekDate }
+      { week_number: currentWeekNumber, score: scorePoints, streak: 0, start_date: startOfWeekDate, end_date: endOfWeekDate }
     ],
     monthly: [
-      { month: new Date().getMonth() + 1, start_date: startOfMonthDate, end_date: endOfMonthDate, score: 0, streak: 0 }
+      { month: new Date().getMonth() + 1, start_date: startOfMonthDate, end_date: endOfMonthDate, score: scorePoints, streak: 0 }
     ],
     yearly: [
-      { year: currentYear, score: 0, start_date: startOfMonthDate, end_date: endOfMonthDate }
+      { year: currentYear, score: scorePoints, start_date: startOfMonthDate, end_date: endOfMonthDate }
     ]
   }
   return defaultScoreStructure;
